@@ -1,0 +1,113 @@
+Sub Stocks()
+    'declare variables to be used'
+    Dim last_row As Long
+    Dim i As Long
+    Dim last_col As Long
+    Dim count_entries As Long
+    Dim open_at As Double
+    Dim close_at As Double
+    Dim yearly_change As Double
+    Dim stock_vol As Double
+    Dim total_stock_vol As Double
+    Dim percent_change As Double
+
+    For Each ws In Worksheets:
+
+      'find last row'
+      last_row = ws.Cells(Rows.Count, "A").End(xlUp).Row
+      'find last column'
+      last_col = ws.Cells(1, Columns.Count).End(xlToLeft).Column
+
+      'creates new column headers, Ticker, Yearly Change, Percent Change, Total Stock Volume'
+      ws.Cells(1, (last_col + 2)).Value = "Ticker"
+      ws.Cells(1, (last_col + 3)).Value = "Yearly Change"
+      ws.Cells(1, (last_col + 4)).Value = "Percent Change"
+      ws.Cells(1, (last_col + 5)).Value = "Total Stock Volume"
+
+      'index starts at row 2'
+      i = 2
+      'counter of yearly change entries'
+      count_entries = 2
+
+      'creates variable for total stock volume'
+      total_stock_vol = 0
+
+        'iterate through every row'
+        For i = 2 To last_row
+
+            stock_vol = ws.Cells(i, 7).Value
+            total_stock_vol = total_stock_vol + stock_vol
+
+            'checks if next cell has different stock name'
+            If ws.Cells(i, 1).Value <> ws.Cells(i + 1, 1).Value Then
+
+                ws.Cells(count_entries, (last_col + 5)).Value = total_stock_vol
+                total_stock_vol = 0
+                close_at = ws.Cells(i, 6).Value
+                yearly_change = close_at - open_at
+                  if open_at <> 0 Then
+                    percent_change = yearly_change / open_at
+                  Else
+                    percent_change = "0"
+                  End If
+                ws.Cells(count_entries, (last_col + 2)).Value = ws.Cells(i, 1).Value
+                ws.Cells(count_entries, (last_col + 3)).Value = yearly_change
+                    'conditionally format yearly change column cells to green or red using if statement'
+                    If yearly_change > 0 Then
+                      ws.Cells(count_entries, (last_col + 3)).Interior.ColorIndex = 4 'green if positive'
+                    ElseIf yearly_change < 0 Then
+                      ws.Cells(count_entries, (last_col + 3)).Interior.ColorIndex = 3 'red if negative'
+                    End If
+                ws.Cells(count_entries, (last_col + 4)).Value = percent_change
+                ws.Cells(count_entries, (last_col + 4)).NumberFormat = "0.00%" 'format percentages'
+                count_entries = count_entries + 1
+
+            'checks if first entry for ticker symbol to get year open value'
+            ElseIf ws.Cells(i, 1).Value <> ws.Cells(i - 1, 1).Value Then
+
+                open_at = ws.Cells(i, 3).Value
+
+            End If
+
+        Next i
+
+    'find greatest % increase/decrease'
+    max_increase = 0
+    max_vol = 0
+    max_decrease = 0
+    For j = 2 To count_entries:
+        perc_change = ws.Cells(j, (last_col + 4)).Value
+        total_vol = ws.Cells(j, (last_col + 5)).Value
+        If perc_change > max_increase Then
+            max_increase = perc_change
+            max_i_ticker = ws.Cells(j, (last_col + 2)).Value
+        ElseIf perc_change < max_decrease Then
+            max_decrease = perc_change
+            max_d_ticker = ws.Cells(j, (last_col + 2)).Value
+        ElseIf total_vol > max_vol Then
+            max_vol = total_vol
+            max_v_ticker = ws.Cells(j, (last_col + 2)).Value
+        End If
+    Next j
+
+    ws.Cells(2, (last_col + 8)).Value = "Greatest % Increase"
+    ws.Cells(2, (last_col + 9)).Value = max_i_ticker
+    ws.Cells(2, (last_col + 10)).Value = max_increase
+    ws.Cells(2, (last_col + 10)).NumberFormat = "0.00%"
+
+
+    ws.Cells(3, (last_col + 8)).Value = "Greatest % Decrease"
+    ws.Cells(3, (last_col + 9)).Value = max_d_ticker
+    ws.Cells(3, (last_col + 10)).Value = max_decrease
+    ws.Cells(3, (last_col + 10)).NumberFormat = "0.00%"
+
+    ws.Cells(4, (last_col + 8)).Value = "Great Total Volume"
+    ws.Cells(4, (last_col + 9)).Value = max_v_ticker
+    ws.Cells(4, (last_col + 10)).Value = max_vol
+
+    ws.Cells(1, (last_col + 9)).Value = "Ticker"
+    ws.Cells(1, (last_col + 10)).Value = "Value"
+
+    Next ws
+
+End Sub
